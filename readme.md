@@ -100,3 +100,14 @@ This function handles the AJAX request sent by the custom button.
 #### `add_custom_css()`
 
 This function adds CSS styles to the admin login page, which are used to display the search results table in a scrollable table format.
+
+
+If I felt like and had time and maybe there was a need, I would maybe add the following features to the LearnPress plugin:
+
+1. Allow users to search for LearnPress courses as well as other post types such as lessons and exams.
+2. Implement the ability to filter search results in ascending or descending order.
+3. Enable users to retrieve multiple search results.
+4. Display relevant course statistics such as the number of enrolled students, average rating, and completion rate.
+5. Provide support for other Learning Management System plugins if there is a similar need.
+6. Filter search results by post status, such as published or draft.
+
