@@ -3,12 +3,11 @@ defined( 'ABSPATH' ) || exit( 'No direct script access allowed' );
 /*
 Plugin Name: LP WC Helper
 Description: LearnPress Woocommerce integration helper , this plugin adds a field to woocommerce product add/edit page that allows searching for LearnPress Courses and their details   
-Version: 1.0
+Version: 1.1
 Author: MeowMeowKhan
 Text Domain: lpwchelperr
 Domain Path: /languages
 */
-// global $wpdb;
 
 // Load plugin text domain
 add_action('plugins_loaded', 'load_my_plugin_textdomain');
@@ -42,60 +41,40 @@ function add_custom_field() {
             )
         )
     );
-    // Checkbox
-    // woocommerce_wp_checkbox(
-    //     array(
-    //         'id' => '_custom_checkbox',
-    //         'label' => __('Use SQL Query', 'lpwchelperr')
-    //     )
-    // );
     echo '</div>';
 }
-
-// Save the custom field value
-// add_action('woocommerce_process_product_meta', 'save_custom_field');
-// function save_custom_field($post_id) {
-//     $custom_field_value = $_POST['_custom_field'];
-//     $custom_select_value = $_POST['_custom_select'];
-//     $custom_checkbox_value = isset($_POST['_custom_checkbox']) ? 'yes' : 'no';
-//     if (!empty($custom_field_value)) {
-//         update_post_meta($post_id, '_custom_field', esc_attr($custom_field_value));
-//     }
-//     if (!empty($custom_select_value)) {
-//         update_post_meta($post_id, '_custom_select', esc_attr($custom_select_value));
-//     }
-//     update_post_meta($post_id, '_custom_checkbox', $custom_checkbox_value);
-// }
 
 // Add a custom button to the product edit page
 add_action('woocommerce_product_options_general_product_data', 'add_custom_button');
 function add_custom_button() {
-    echo '<div class="options_group">';
-    echo '<button id="custom-button" type="button">Sumbit</button>';
-    echo '</div>';
+    $output = "";
+    $output .= '<div class="options_group">';
+    $output .= '<button id="custom-button" type="button">Sumbit</button>';
+    $output .= '<div id="vscroll">';
+    $output .= '</div>';
+    $output .= '</div>';
+    echo $output;
 }
 
 // Add JavaScript for the button click event
 add_action('admin_footer', 'custom_button_script');
 function custom_button_script() {
+    $nonce = wp_create_nonce('my_custom_action_nonce');
     echo '<script type="text/javascript">
         jQuery(document).ready(function($) {
             $("#custom-button").click(function() {
-                // Get the value of the field, the select, and the checkbox
+                // Get the value of the field, the select
                 var fieldValue = $("#_custom_field").val();
                 var selectValue = $("#_custom_select").val();
-                var checkboxValue = $("#_custom_checkbox").is(":checked") ? "yes" : "no";
-                // Perform your SQL query here
-                // For example:
                 var data = {
                     "action": "my_custom_action",
                     "field_value": fieldValue,
                     "select_value": selectValue,
-                    "checkbox_value": checkboxValue
+                    "nonce": "' . $nonce . '",
                 };
                 $.post(ajaxurl, data, function(response) {
-                    // Display the response under the button
-                    $("#custom-button").after("<p>" + response + "</p>");
+                    $("#vscroll").prepend("<p>" + response + "</p>");
+                    
                 });
             });
         });
@@ -105,13 +84,20 @@ function custom_button_script() {
 // Handle the AJAX request
 add_action('wp_ajax_my_custom_action', 'handle_custom_action');
 function handle_custom_action() {
+    check_ajax_referer('my_custom_action_nonce', 'nonce');
+
+    if (!current_user_can('edit_products')) {
+        wp_die('
+        <div class="alert">
+          <strong>Invalid!</strong> You do not have permission to execute this request.
+        </div>
+        ');
+    }
     // Get the value of the field
     $options = ["post_title","post_name","ID","search"];
     $fieldValue = sanitize_text_field($_POST['field_value']);
     $selectValue = sanitize_text_field($_POST['select_value']);
-    $checkboxValue = sanitize_text_field($_POST['checkbox_value']);
-    
-    // Prevent Stupidity from happening...
+
     if (!(in_array($selectValue,$options))){
                     wp_die('
             <div class="alert">
@@ -121,104 +107,84 @@ function handle_custom_action() {
     }
     
     // Use get_posts to retrieve posts
-    if ($checkboxValue === 'no') {
-       echo '<div class="success">
-          <strong>Get Request Successful!</strong> 
-        </div>';
-        if (in_array($selectValue,["ID"])){
-            $args = array(
-                'post__in' => [intval($fieldValue)],
-                'post_type'   => 'lp_course',
-                'post_status' => 'publish',
-                'numberposts' => 1
-            );
-        }
-        if (in_array($selectValue,["post_name"])){
-            $args = array(
-                'name' => $fieldValue,
-                'post_type'   => 'lp_course',
-                'post_status' => 'publish',
-                'numberposts' => 1
-            );
-        }
-        if (in_array($selectValue,["post_title"])){
-            $args = array(
-                'title' => $fieldValue,
-                'post_type'   => 'lp_course',
-                'post_status' => 'publish',
-                'numberposts' => 1
-            );
-        }
-        if (in_array($selectValue,["search"])){
-            $args = array(
-                's' => $fieldValue,
-                'post_type'   => 'lp_course',
-                'post_status' => 'publish',
-                'numberposts' => 1
-            );
-        }
-        $posts = get_posts($args);
-    } else {
-        echo '<div class="success">
-              <strong>SQL Query Successful!</strong> 
-            </div>';
-        // Check if selectValue is either 'post_title' or 'post_name' (slug) to prevent SQL injection
-        if ($selectValue !== 'post_title' && $selectValue !== 'post_name' && $selectValue !== 'ID') {
-            wp_die('
-            <div class="alert">
-              <strong>Invalid!</strong> This value combination is NOT supported.
-            </div>
-            ');
-        }
-        $search_string = _real_escape(strtolower(trim(strip_tags($fieldValue)))); // Replace with your search string
-        $search_string = '%' . $wpdb->esc_like($search_string) . '%'; // Adding the wildcards
-        
-        
-        $query = $wpdb->prepare("SELECT * FROM {$wpdb->prefix}posts WHERE post_type = 'lp_course' AND post_status = 'publish' AND {$selectValue} LIKE %s", $search_string);
-        $posts = $wpdb->get_results($query);
-        
 
+     if (in_array($selectValue,["ID"])){
+         $args = array(
+             'post__in' => [intval($fieldValue)],
+             'post_type'   => 'lp_course',
+             'post_status' => 'publish',
+             'numberposts' => 1
+         );
+     }elseif (in_array($selectValue,["post_name"])){
+         $args = array(
+             'name' => $fieldValue,
+             'post_type'   => 'lp_course',
+             'post_status' => 'publish',
+             'numberposts' => 1
+         );
+     }elseif (in_array($selectValue,["post_title"])){
+         $args = array(
+             'title' => $fieldValue,
+             'post_type'   => 'lp_course',
+             'post_status' => 'publish',
+             'numberposts' => 1
+         );
+     }elseif (in_array($selectValue,["search"])){
+         $args = array(
+             's' => $fieldValue,
+             'post_type'   => 'lp_course',
+             'post_status' => 'publish',
+             'numberposts' => 1
+         );
+     }
+     $posts = get_posts($args);
+     if (!$posts) {
+        wp_die('<div class="alert"><strong>Oopsies!</strong> No courses found.</div>');
     }
+    echo '<div class="success">
+        <strong>Get Request Successful!</strong> 
+    </div>';
 
     // echo json_encode($posts, JSON_PRETTY_PRINT);
     // Start the table
-    echo '<div class="table-wrapper">';
-    echo '<table class="fl-table">';
-    echo '<thead>';
-    echo '<tr>';
-    echo '<th>Course PID</th>';
-    echo '<th>Name/Slug</th>';
-    echo '<th>Title</th>';
-    echo '<th>Status</th>';
-    echo '<th>Comment Status</th>';
-    echo '<th>Last Modified</th>';
-    echo '<th>Author ID</th>';
-    echo '</tr>';
-    echo '</thead>';
-    echo '<tbody>';
+    $output = '<div class="table-wrapper">';
+    $output .= '<table class="fl-table">';
+    $output .= '<thead>';
+    $output .= '<tr>';
+    $output .= '<th>Course PID</th>';
+    $output .= '<th>Name/Slug</th>';
+    $output .= '<th>Title</th>';
+    $output .= '<th>Status</th>';
+    $output .= '<th>Comment Status</th>';
+    $output .= '<th>Last Modified</th>';
+    $output .= '<th>Author ID</th>';
+    $output .= '</tr>';
+    $output .= '</thead>';
+    $output .= '<tbody>';
     // Output each post as a row in the table
     foreach ($posts as $post) {
-        echo '<tr>';
-        echo '<td>' . $post->ID . '</td>';
-        echo '<td>' . $post->post_name . '</td>';
-        echo '<td>' . $post->post_title . '</td>';
-        echo '<td>' . $post->post_status . '</td>';
-        echo '<td>' . $post->comment_status . '</td>';
-        echo '<td>' . $post->post_modified . '<pr> GMT </pre> </td>';
-        echo '<td>' . $post->post_author . '</td>';
-        echo '</tr>';
+        $output .= '<tr>';
+        $output .= '<td>' . $post->ID . '</td>';
+        $output .= '<td>' . $post->post_name . '</td>';
+        $output .= '<td>' . $post->post_title . '</td>';
+        $output .= '<td>' . $post->post_status . '</td>';
+        $output .= '<td>' . $post->comment_status . '</td>';
+        $output .= '<td>' . $post->post_modified . '<pr> GMT </pre> </td>';
+        $output .= '<td>' . $post->post_author . '</td>';
+        $output .= '</tr>';
     }
-    echo '</tbody>';
-    echo '</table>';
-    echo '<p class="cExcerpt">Course  Excerpt :</p>';
-    echo '<textarea readonly class="pcontent" name="pcontent">';
-    echo (!empty($post->post_excerpt) ? $post->post_excerpt : 'No Excerpt');
-    echo '</textarea>';
-    echo '<p class="cdesc">Course Description :</p>';
-    echo '<textarea readonly class="pcontent" name="pcontent">';
-    echo (!empty($post->post_content) ? $post->post_content : 'No Description');
-    echo '</textarea>';
-    echo '</div>';
+    $output .= '</tbody>';
+    $output .= '</table>';
+    $output .= '<p class="cExcerpt">Course  Excerpt :</p>';
+    $output .= '<textarea readonly class="pcontent" name="pcontent">';
+    $output .= (!empty($post->post_excerpt) ? $post->post_excerpt : 'No Excerpt');
+    $output .= '</textarea>';
+    $output .= '<p class="cdesc">Course Description :</p>';
+    $output .= '<textarea readonly class="pcontent" name="pcontent">';
+    $output .= (!empty($post->post_content) ? $post->post_content : 'No Description');
+    $output .= '</textarea>';
+    $output .= '</div>';
+    echo $output;
     wp_die(); // This is required to terminate immediately and return a proper response
 }
 // Add CSS to the admin head
@@ -397,17 +363,15 @@ function add_custom_css() {
   background-color: #f44336;
   color: white;
 }
-    .success {
+.success {
   padding: 20px;
   background-color: green;
   color: white;
 }
 .info{
-.alert {
-  padding: 20px;
-  background-color: lightblue;
-  color: white;
-}
+    padding: 20px;
+    background-color: lightblue;
+    color: white;
 }
 
 .closebtn {
@@ -423,6 +387,10 @@ function add_custom_css() {
 
 .closebtn:hover {
   color: black;
+}
+#vscroll{
+	overflow-y: auto;
+    max-height: 600px;
 }
     </style>';
 }
