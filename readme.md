@@ -7,7 +7,7 @@ In order to use the LP WC Helper plugin properly, you need to have the following
 
 1. [WooCommerce](https://wordpress.org/plugins/woocommerce/): This is required for the LP WC Helper plugin to integrate LearnPress with WooCommerce. You can download and install WooCommerce from the WordPress plugin repository.
 2. [LearnPress](https://wordpress.org/plugins/learnpress/): This is the e-learning plugin that the LP WC Helper plugin integrates with WooCommerce. You can download and install LearnPress from the WordPress plugin repository.
-3. [LearnPress - WooCommerce Payment Methods Integration by thimpress](https://wordpress.org/plugins/learnpress-woocommerce-payment/): This plugin integrates the payment methods of WooCommerce with LearnPress. You can download and install this plugin from the WordPress plugin repository.
+3. [LearnPress - WooCommerce Payment Methods Integration by thimpress](https://thimpress.com/product/woocommerce-add-on-for-learnpress/): This plugin integrates the payment methods of WooCommerce with LearnPress. You can download and install this plugin from the WordPress plugin repository.
 
 ## Installation
 
