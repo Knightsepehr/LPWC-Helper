@@ -1,6 +1,6 @@
 # LP WC Helper
 
-LP WC Helper is a WordPress plugin that aids in the integration of LearnPress and Woocommerce. This plugin adds a custom field to the product add/edit page that allows searching for LearnPress courses and their details.
+The LP WC Helper WordPress plugin serves as a valuable tool for facilitating the integration between LearnPress and Woocommerce. By introducing a custom field onto the product add/edit page, this plugin enables users to efficiently explore and uncover pertinent details related to LearnPress courses.
 ## Requirements
 
 In order to use the LP WC Helper plugin properly, you need to have the following installed and activated on your WordPress site:
