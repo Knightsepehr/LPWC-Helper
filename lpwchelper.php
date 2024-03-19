@@ -8,7 +8,7 @@ Author: MeowMeowKhan
 Text Domain: lpwchelperr
 Domain Path: /languages
 */
-global $wpdb;
+// global $wpdb;
 
 // Load plugin text domain
 add_action('plugins_loaded', 'load_my_plugin_textdomain');
