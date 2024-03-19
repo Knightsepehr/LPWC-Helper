@@ -43,6 +43,8 @@ The search results table is displayed in a scrollable table format that includes
 - Comment Status
 - Last Modified
 - Author ID
+- Content
+- Excerpt
 
 ## Plugin Information
 
