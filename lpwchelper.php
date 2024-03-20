@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit( 'No direct script access allowed' );
  * Plugin Name: LP WC Helper
  * Plugin URI: https://github.com/Knightsepehr/LPWC-Helper/
  * Description: The LP WC Helper WordPress plugin serves as a tool for facilitating the integration between LearnPress and Woocommerce. By introducing a custom field onto the product add/edit page, this plugin enables users to efficiently explore and uncover pertinent details related to LearnPress courses.
- * Version: 1.1
+ * Version: 1.2
  * Author: SepehrZekavat
  * Author URI: https://SepehrZekavat.ir
  * License:     GPLv3
